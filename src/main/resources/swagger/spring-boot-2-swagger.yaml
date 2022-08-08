@@ -1,0 +1,124 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: Spring Boot 2
+  description: ''
+host: ''
+basePath: /sb2
+schemes:
+  - http
+produces:
+  - application/json
+paths:
+  /customers:
+    post:
+      operationId: createCustomer
+      summary: Create Customer
+      tags:
+        - internal
+      description: Create Customer Description
+      consumes:
+        -application/json
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/customer-request'
+      response:
+        '201':
+          description: 'Success Response'
+          schema:
+            $ref: '#/definitions/customer-response'
+        '400':
+          description: Bad Request
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/error-response'
+        '500':
+          description: Something went wrong
+          schema:
+            $ref: '#/definitions/error-response'
+  /customers/{userName}:
+    get:
+      operationId: getCustomerByUserName
+      summary: Return Customer details response
+      tags:
+        - internal
+      description: Return Customer details for given userName
+      consumes:
+        - application/json
+      parameters:
+        - name: userName
+          in: path
+          type: string
+          required: true
+          description: username of the user
+          default: ALL
+      responses:
+        '200':
+          description: 'OK response'
+          schema:
+            $ref: #/definitions/customer-response
+        '404':
+          description: User Not Found
+          schema:
+            $ref: '#/definitions/error-response'
+definitions:
+  error:
+    title: Error response
+    type: object
+    properties:
+      code:
+        type: string
+        description: Error description
+        example: ERR-1000
+      fields:
+        type: array
+        description: List of fields with error
+        example: [ "/status/message/error_message" ]
+        items:
+          type: string
+      message:
+        type: string
+        description: Error message
+        example: "Record not found"
+      messageParams:
+        type: array
+        description: error message parameters or arguments
+        items:
+          type: string
+        example: [ "wrong_param", [ "STATUS1", "STATUS2" ] ]
+  error-response:
+    title: List Of Errors
+    properties:
+      errors:
+        type: array
+        description: List of errors response
+        items:
+          $ref: '#/definitions/error
+  customer-request:
+    type: object
+    description: Customer request
+    properties:
+      userName:
+        type: string
+        description: userName of the Customer
+  customer-response:
+    type: object
+    description: Customer details response
+    properties:
+      userName:
+        type: string
+        description: Customer username
+      firstName:
+        type: string
+        description: First name of customer
+      lastName:
+        type: string
+        description: Last name of customer
+      email:
+        type: string
+        description: email address of customer
+
+
