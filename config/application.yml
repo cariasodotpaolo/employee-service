@@ -6,7 +6,7 @@ management:
   context-path: /console
 
 logging:
-  config: "classpath:logback-spring.xml"
+  config: "classpath:logback.xml"
   level:
     io.challenge: INFO
 
