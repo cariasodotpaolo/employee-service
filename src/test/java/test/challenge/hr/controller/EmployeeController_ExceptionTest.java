@@ -33,12 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * @author Paolo Cariaso
- * @date 9/8/2022 11:29 AM
+ * @date 10/8/2022 12:48 AM
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class EmployeeControllerTest {
+public class EmployeeController_ExceptionTest {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -48,7 +48,7 @@ public class EmployeeControllerTest {
     private WebApplicationContext webApplicationContext;
     @InjectMocks
     private EmployeeController employeeController;
-    @Value("classpath:test_data.csv")
+    @Value("classpath:test_data_error.csv")
     private Resource employeesUploadFile;
 
     @BeforeEach
@@ -60,11 +60,11 @@ public class EmployeeControllerTest {
     @Test
     void uploadUsers() throws Exception {
 
-            mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                    .file("uploadFile", givenUploadFile().getBytes())
-                    .characterEncoding("UTF-8"))
-                    .andExpect(status().is(HttpStatus.CREATED.value()))
-                    .andExpect(jsonPath("$.message", is("File uploaded successfully.")));
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
+                .file("uploadFile", givenUploadFile().getBytes())
+                .characterEncoding("UTF-8"))
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message", is("File uploaded successfully.")));
 
     }
 
@@ -72,23 +72,27 @@ public class EmployeeControllerTest {
     void getUsers() throws Exception {
 
         mockMvc.perform(MockMvcRequestBuilders
-        .get("/users")
-        .contentType(MediaType.APPLICATION_JSON)
-                .param("minSalary", "0")
+                .get("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("minSalary", "-1")
                 .param("maxSalary", "4000"))
-                .andExpect(status().is(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.results", is("[]")));
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message", is("Invalid parameter value.")));
     }
 
     @Test
     void createUser() throws Exception {
 
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
+                .file("uploadFile", givenUploadFile().getBytes())
+                .characterEncoding("UTF-8"));
+
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(employeeEntityJson()))
-                .andExpect(status().is(HttpStatus.CREATED.value()))
-                .andExpect(jsonPath("$.message", is("Successfully created")));
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message", is("Employee ID already exists")));
 
     }
 
@@ -96,15 +100,9 @@ public class EmployeeControllerTest {
     void getUser() throws Exception {
 
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/users/{id}", "emp0001")
+                .get("/users/{id}", "XXXXX")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.id", is("emp0001")))
-                .andExpect(jsonPath("$.name", is("Harry Potter")))
-                .andExpect(jsonPath("$.login", is("hpotter")))
-                .andExpect(jsonPath("$.salary", is(1234.00)))
-                .andExpect(jsonPath("$.startDate", is("2001-11-16")))
-        ;
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()));
     }
 
     @Test
@@ -114,7 +112,7 @@ public class EmployeeControllerTest {
                 .put("/users/{id}", "emp0001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(employeeEntityJson()))
-                .andExpect(status().is(HttpStatus.OK.value()))
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.message", is("Successfully updated")));
 
     }
@@ -125,7 +123,7 @@ public class EmployeeControllerTest {
         mockMvc.perform(MockMvcRequestBuilders
                 .delete("/users/{id}", "emp0001")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(HttpStatus.OK.value()))
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.message", is("Successfully deleted")));
     }
 
@@ -134,7 +132,7 @@ public class EmployeeControllerTest {
         MultipartFile file = null;
 
         try {
-            file = new MockMultipartFile("uploadFile", "test_data.csv", MediaType.TEXT_PLAIN_VALUE, employeesUploadFile.getInputStream().toString().getBytes(StandardCharsets.UTF_8));
+            file = new MockMultipartFile("uploadFile", "test_data_error.csv", MediaType.TEXT_PLAIN_VALUE, employeesUploadFile.getInputStream().toString().getBytes(StandardCharsets.UTF_8));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -143,7 +141,7 @@ public class EmployeeControllerTest {
         return file;
     }
 
-    private String getUserListResponse() {
+    private String getUserListJsonResponse() {
 
         return "{\n" +
                 "\"results\": [" +
@@ -169,6 +167,17 @@ public class EmployeeControllerTest {
                 "\"id\": \"emp0001\"," +
                 "\"name\": \"Harry Potter\"," +
                 "\"login\": \"hpotter\"," +
+                "\"salary\": 1234.00,\n" +
+                "\"startDate\": \"2001-11-16\"" +
+                "}";
+    }
+
+    private String nonExistentEmployeeEntityJson() {
+
+        return "{\n" +
+                "\"id\": \"emp99999\"," +
+                "\"name\": \"Harry Nowhere\"," +
+                "\"login\": \"harrywho\"," +
                 "\"salary\": 1234.00,\n" +
                 "\"startDate\": \"2001-11-16\"" +
                 "}";

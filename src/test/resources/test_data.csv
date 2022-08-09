@@ -1,0 +1,3 @@
+id, name, login, salary, startDate
+emp0001, Harry Potter, hpotter, 1234.00, 2001-11-16
+emp0002, Severus Snape, ssnape, 1234.56, 2001-11-16
