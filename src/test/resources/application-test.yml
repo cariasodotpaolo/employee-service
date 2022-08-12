@@ -1,0 +1,38 @@
+server:
+  port: 8080
+  context-path: /employee-service
+management:
+  port: 9999
+  context-path: /console
+
+logging:
+  config: "classpath:logback.xml"
+  level:
+    io.challenge: DEBUG
+
+spring:
+  datasource:
+    primary:
+      driver-class-name: org.h2.Driver
+      url: jdbc:h2:mem:testdb
+      username:
+      password:
+      connection-timeout: 20000
+      minimum-idle: 10
+      maximum-pool-size: 10
+      idle-timeout: 10000
+      max-lifetime: 1000
+      auto-commit: true
+    readonly:
+      driver-class-name: org.h2.Driver
+      url: jdbc:h2:mem:testdb
+      username:
+      password:
+      connection-timeout: 20000
+      minimum-idle: 10
+      maximum-pool-size: 10
+      idle-timeout: 10000
+      max-lifetime: 1000
+      auto-commit: true
+    jpa:
+      database-platform: org.hibernate.dialect.OracleDialect

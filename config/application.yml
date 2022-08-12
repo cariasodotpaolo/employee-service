@@ -8,7 +8,7 @@ management:
 logging:
   config: "classpath:logback.xml"
   level:
-    io.challenge: INFO
+    io.challenge: DEBUG
 
 spring:
   datasource:
