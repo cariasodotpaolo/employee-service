@@ -21,5 +21,5 @@ public interface EmployeeUserRepository extends JpaRepository<EmployeeUserEntity
                                      @Param("maxSalary") BigDecimal maxSalary,
                                      Pageable pageable);
 
-    Optional<EmployeeUserEntity> findByUserId(String userId);
+    Optional<EmployeeUserEntity> findById(String employeeId);
 }

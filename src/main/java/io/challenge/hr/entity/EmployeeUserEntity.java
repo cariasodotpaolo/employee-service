@@ -2,6 +2,7 @@ package io.challenge.hr.entity;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * @author Paolo Cariaso
@@ -12,11 +13,9 @@ import java.math.BigDecimal;
 public class EmployeeUserEntity {
 
     @Id
-    @GeneratedValue( strategy = GenerationType.SEQUENCE, generator = "employee_user_sequence")
-    @SequenceGenerator( name = "employee_user_sequence", sequenceName = "employee_user_seq", allocationSize = 1)
-    private Long id;
-    @Column(name = "user_id", unique = true)
-    private String employeeId;
+    //@GeneratedValue( strategy = GenerationType.SEQUENCE, generator = "employee_user_sequence")
+    //@SequenceGenerator( name = "employee_user_sequence", sequenceName = "employee_user_seq", allocationSize = 1)
+    private String id;
     @Column(name = "name")
     private String name;
     @Column(name = "login", unique = true)
@@ -24,33 +23,25 @@ public class EmployeeUserEntity {
     @Column(name = "salary")
     private BigDecimal salary;
     @Column(name = "start_date")
-    private String startDate;
+    private LocalDate startDate;
 
     public EmployeeUserEntity() {
     }
 
-    public EmployeeUserEntity(String employeeId, String name, String login, BigDecimal salary, String startDate) {
-        this.employeeId = employeeId;
+    public EmployeeUserEntity(String id, String name, String login, BigDecimal salary, LocalDate startDate) {
+        this.id = id;
         this.name = name;
         this.login = login;
         this.salary = salary;
         this.startDate = startDate;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
-    }
-
-    public String getEmployeeId() {
-        return employeeId;
-    }
-
-    public void setEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
     }
 
     public String getName() {
@@ -77,11 +68,11 @@ public class EmployeeUserEntity {
         this.salary = salary;
     }
 
-    public String getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(String startDate) {
+    public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 }

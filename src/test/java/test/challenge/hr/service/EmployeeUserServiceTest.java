@@ -1,7 +1,10 @@
 package test.challenge.hr.service;
 
 import io.challenge.hr.exception.EmployeeNotFoundException;
+import io.challenge.hr.exception.InvalidDataException;
+import io.challenge.hr.model.EmployeeUser;
 import io.challenge.hr.service.EmployeeUserService;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -73,9 +76,9 @@ public class EmployeeUserServiceTest {
     }
 
     @Test
-    void createEmployeeUser() {
+    void createEmployeeUser() throws JdbcSQLIntegrityConstraintViolationException, InvalidDataException {
 
-        employeeUserService.create("emp0020", "Potter Second", "new_potter", BigDecimal.valueOf(2000.00), "2001-11-16");
+        employeeUserService.create(new EmployeeUser().setId("emp0020").setName("Potter Second").setLogin("new_potter").setSalary(BigDecimal.valueOf(2000.00)).setStartDate("2001-11-16"));
     }
 
     @Test

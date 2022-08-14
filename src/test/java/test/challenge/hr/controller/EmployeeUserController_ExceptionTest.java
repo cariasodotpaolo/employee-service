@@ -3,11 +3,14 @@ package test.challenge.hr.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.challenge.hr.controller.EmployeeUserController;
+import io.challenge.hr.exception.FileUploadException;
 import io.challenge.hr.model.EmployeeUser;
+import io.challenge.hr.service.EmployeeUserService;
+import io.challenge.hr.service.UploadFileService;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,9 +33,11 @@ import test.challenge.hr.TestApplication;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,12 +56,22 @@ public class EmployeeUserController_ExceptionTest {
     private MockMvc mockMvc;
     @Autowired
     private WebApplicationContext webApplicationContext;
-    @InjectMocks
+    @Autowired
     private EmployeeUserController employeeUserController;
-    @Value("classpath:test_data_duplicate_record.csv")
+    @Value("classpath:test_data.csv")
     private Resource employeesUploadFile;
+    @Value("classpath:test_data_duplicate_record.csv")
+    private Resource duplicateRecordsFile;
+    @Value("classpath:test_data_invalid_salary.csv")
+    private Resource invalidSalaryFile;
+    @Value("classpath:test_data_invalid_startdate.csv")
+    private Resource invalidStartDateFile;
     @Autowired
     private ObjectMapper objectMapper;
+    @MockBean
+    private UploadFileService uploadFileService;
+    @MockBean
+    private EmployeeUserService employeeUserService;
 
     @BeforeEach
     public void setup() {
@@ -66,31 +82,49 @@ public class EmployeeUserController_ExceptionTest {
     @Test
     void uploadUsers_whenFileContentIsInvalid() throws Exception {
 
+        given(uploadFileService.mapEmployees(any(MultipartFile.class))).willThrow(new FileUploadException("File parsing error."));
+
         mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
                 .file("uploadFile", givenUploadFile().getBytes())
                 .characterEncoding("UTF-8"))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("File parsing error")));
+                .andExpect(jsonPath("$.message", is("File parsing error.")));
     }
 
     @Test
     void uploadUsers_whenSalaryValueIsInvalid() throws Exception {
 
+        given(uploadFileService.mapEmployees(any(MultipartFile.class))).willThrow(new FileUploadException("Invalid salary value."));
+
         mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                .file("uploadFile", givenUploadFile().getBytes())
+                .file("uploadFile", givenInvalidSalaryFile().getBytes())
                 .characterEncoding("UTF-8"))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Invalid salary value")));
+                .andExpect(jsonPath("$.message", is("Invalid salary value.")));
+    }
+
+    @Test
+    void uploadUsers_whenStartDateValueIsInvalid() throws Exception {
+
+        given(uploadFileService.mapEmployees(any(MultipartFile.class))).willThrow(new FileUploadException("Invalid startDate value."));
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
+                .file("uploadFile", givenInvalidStartDateFile().getBytes())
+                .characterEncoding("UTF-8"))
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message", is("Invalid salary value.")));
     }
 
     @Test
     void uploadUsers_whenRowIsDuplicate() throws Exception {
 
+        given(uploadFileService.mapEmployees(any(MultipartFile.class))).willThrow(new FileUploadException("Duplicate record found."));
+
         mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                .file("uploadFile", givenUploadFile().getBytes())
+                .file("uploadFile", givenDuplicateRecordFile().getBytes())
                 .characterEncoding("UTF-8"))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Duplicate record found")));
+                .andExpect(jsonPath("$.message", is("Duplicate record found.")));
     }
 
     @Test
@@ -102,7 +136,7 @@ public class EmployeeUserController_ExceptionTest {
                 .param("minSalary", "One Thousand")
                 .param("maxSalary", "4000.00"))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Invalid minimum salary value")));
+                .andExpect(jsonPath("$.message", matchesPattern("Invalid parameter.")));
     }
 
     @Test
@@ -114,37 +148,33 @@ public class EmployeeUserController_ExceptionTest {
                 .param("minSalary", "1000.00")
                 .param("maxSalary", "Four Thousand"))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Invalid maximum salary value")));
+                .andExpect(jsonPath("$.message", is("Invalid parameter.")));
     }
 
     @Test
     void createUser_whenEmployeeIDExists() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                .file("uploadFile", givenUploadFile().getBytes())
-                .characterEncoding("UTF-8"));
+        given(employeeUserService.create(any())).willThrow(JdbcSQLIntegrityConstraintViolationException.class);
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(employeeEntityJson()))
+                .content(existingEmployeeEntityJson()))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Employee ID already exists")));
+                .andExpect(jsonPath("$.message", is("Employee ID already exists.")));
     }
 
     @Test
     void createUser_whenLoginAlreadyExists() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                .file("uploadFile", givenUploadFile().getBytes())
-                .characterEncoding("UTF-8"));
+        given(employeeUserService.create(any())).willThrow(JdbcSQLIntegrityConstraintViolationException.class);
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(employeeEntityJson()))
+                .content(existingEmployeeEntityJson()))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Employee login already exists")));
+                .andExpect(jsonPath("$.message", is("Employee login already exists.")));
     }
 
     @Test
@@ -214,7 +244,53 @@ public class EmployeeUserController_ExceptionTest {
         MultipartFile file = null;
 
         try {
-            file = new MockMultipartFile("uploadFile", "test_data_duplicate_record.csv", MediaType.TEXT_PLAIN_VALUE, employeesUploadFile.getInputStream().toString().getBytes(StandardCharsets.UTF_8));
+            file = new MockMultipartFile("uploadFile", "test_data.csv",
+                    MediaType.TEXT_PLAIN_VALUE, employeesUploadFile.getInputStream());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return file;
+    }
+
+    private MultipartFile givenDuplicateRecordFile() {
+
+        MultipartFile file = null;
+
+        try {
+            file = new MockMultipartFile("uploadFile", "test_data_duplicate_record.csv",
+                    MediaType.TEXT_PLAIN_VALUE, duplicateRecordsFile.getInputStream());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return file;
+    }
+
+    private MultipartFile givenInvalidSalaryFile() {
+
+        MultipartFile file = null;
+
+        try {
+            file = new MockMultipartFile("uploadFile", "test_data_invalid_salary.csv",
+                    MediaType.TEXT_PLAIN_VALUE, invalidSalaryFile.getInputStream());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return file;
+    }
+
+    private MultipartFile givenInvalidStartDateFile() {
+
+        MultipartFile file = null;
+
+        try {
+            file = new MockMultipartFile("uploadFile", "test_data_invalid_startdate.csv",
+                    MediaType.TEXT_PLAIN_VALUE, invalidStartDateFile.getInputStream());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -249,8 +325,19 @@ public class EmployeeUserController_ExceptionTest {
                 .setId("emp0001")
                 .setLogin("hpotter")
                 .setName("Harry Potter")
-                .setSalary(new BigDecimal(1234.00))
+                .setSalary(BigDecimal.valueOf(1234.00))
                 .setStartDate("2001-11-16");
+        return objectMapper.writeValueAsString(employeeUser);
+    }
+
+    private String existingEmployeeEntityJson() throws JsonProcessingException {
+
+        EmployeeUser employeeUser = new EmployeeUser()
+                .setId("emp9001")
+                .setLogin("dharry")
+                .setName("Dirty Harry")
+                .setSalary(BigDecimal.valueOf(3000.00))
+                .setStartDate("2001-10-16");
         return objectMapper.writeValueAsString(employeeUser);
     }
 
@@ -260,7 +347,7 @@ public class EmployeeUserController_ExceptionTest {
                 .setId("emp99999")
                 .setLogin("harrywho")
                 .setName("Harry Nowhere")
-                .setSalary(new BigDecimal(1234.00))
+                .setSalary(BigDecimal.valueOf(1234.00))
                 .setStartDate("2001-11-16");
         return objectMapper.writeValueAsString(employeeUser);
     }
@@ -269,7 +356,7 @@ public class EmployeeUserController_ExceptionTest {
 
         EmployeeUser employeeUser = new EmployeeUser()
                 .setLogin("harrywho")
-                .setSalary(new BigDecimal(1234.00))
+                .setSalary(BigDecimal.valueOf(1234.00))
                 .setStartDate("2001-11-16");
         return objectMapper.writeValueAsString(employeeUser);
 
