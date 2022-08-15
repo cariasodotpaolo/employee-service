@@ -53,12 +53,21 @@ MAVEN BUILD:
    ``$ mvn clean package -DskipTests`` //skip executing tests during compile and package build
    
 RUN THE APPLICATION:
-2. Open terminal/ Command prompt/ Git Bash and change dir to the unzipped directory/folder.  
+1. Open terminal/ Command prompt/ Git Bash and change dir to the unzipped directory/folder.  
    ``$ cd /path/to/app/dir/employee-service``
-4. NOTE: The package has pre-package Java application archive in ``target/`` subdirectory together with compiled classes
-5. Run the application:  
+2. NOTE: The package has pre-package Java application archive in ``target/`` subdirectory together with compiled classes
+3. Run the application:  
    ``$ java -jar target/employee-service-1.0.jar``
    
+API DETAILS:
+CONTEXT PATH (CONTEXT ROOT): /employee-service
+SERVER PORT: 8080
+UPLOAD URL: http://localhost:8080/employee-service/users/upload
+GET LIST URL: http://localhost:8080/employee-service/users?minSalary=0&maxSalary=5000&offset=0&limit=0
+CREATE URL: POST http://localhost:8080/employee-service/users
+GET URL: GET http://localhost:8080/employee-service/users/{id}
+UPDATE URL: PATCH http://localhost:8080/employee-service/users/emp9001
+
 FUNCTIONAL TESTING VIA POSTMAN:
 1. Install Postman
 2. Import the postman collection json file in /postman directory
