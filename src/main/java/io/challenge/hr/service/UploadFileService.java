@@ -1,6 +1,5 @@
 package io.challenge.hr.service;
 
-import io.challenge.hr.entity.EmployeeUserEntity;
 import io.challenge.hr.exception.FileUploadException;
 import io.challenge.hr.exception.InvalidDataException;
 import io.challenge.hr.model.EmployeeUser;
@@ -22,8 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.lang.Double.parseDouble;
 
 /**
  * @author Paolo Cariaso

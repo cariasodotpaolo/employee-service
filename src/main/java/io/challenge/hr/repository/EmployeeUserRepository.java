@@ -22,4 +22,6 @@ public interface EmployeeUserRepository extends JpaRepository<EmployeeUserEntity
                                      Pageable pageable);
 
     Optional<EmployeeUserEntity> findById(String employeeId);
+
+    EmployeeUserEntity findByLogin(String login);
 }

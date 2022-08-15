@@ -19,6 +19,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -38,7 +39,12 @@ public class EmployeeUserService {
                                       Integer offset,
                                       Integer limit) {
 
-        List<EmployeeUserEntity> entities = employeeUserRepository.getList(minSalary, maxSalary, new OffsetBasedPageRequest(offset, limit));
+        Integer maxResultSize = limit;
+
+        if (isNull(limit) || limit.equals(0)) {
+            maxResultSize = Integer.MAX_VALUE;
+        }
+        List<EmployeeUserEntity> entities = employeeUserRepository.getList(minSalary, maxSalary, new OffsetBasedPageRequest(offset, maxResultSize));
 
         return EmployeeUserMapper.mapToModelList(entities);
     }
@@ -47,18 +53,10 @@ public class EmployeeUserService {
 
         EmployeeUserEntity entity = EmployeeUserMapper.mapToEntity(employeeUser);
 
-        employeeUserRepository.save(entity);
-
-        return EmployeeUserMapper.mapToModel(entity);
-    }
-
-    public EmployeeUser create( String id,
-                                String name,
-                                String login,
-                                BigDecimal salary,
-                                String startDate) {
-
-        EmployeeUserEntity entity = new EmployeeUserEntity(id, name, login, salary, DateUtil.parseStartDate(startDate));
+        EmployeeUserEntity entityWithIdenticalLogin = employeeUserRepository.findByLogin(employeeUser.getLogin());
+        if (nonNull(entityWithIdenticalLogin) && !entityWithIdenticalLogin.getId().equals(entity.getId())) {
+            throw new InvalidDataException("Login not unique.");
+        }
 
         employeeUserRepository.save(entity);
 
@@ -68,15 +66,22 @@ public class EmployeeUserService {
     public EmployeeUser get(String userId) throws EmployeeNotFoundException {
 
         Optional<EmployeeUserEntity> optionalEntity = employeeUserRepository.findById(userId);
-        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found"));
+        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found."));
 
         return EmployeeUserMapper.mapToModel(entity);
     }
 
-    public EmployeeUser update(String userId, EmployeeUser employeeUser) throws EmployeeNotFoundException {
+    public EmployeeUser update(String userId, EmployeeUser employeeUser) throws EmployeeNotFoundException, JdbcSQLIntegrityConstraintViolationException, InvalidDataException {
 
         Optional<EmployeeUserEntity> optionalEntity = employeeUserRepository.findById(userId);
-        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found"));
+        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found."));
+
+        if (!entity.getLogin().equals(employeeUser.getLogin())) {
+            EmployeeUserEntity entityWithIdenticalLogin = employeeUserRepository.findByLogin(employeeUser.getLogin());
+            if (nonNull(entityWithIdenticalLogin) && !entityWithIdenticalLogin.getId().equals(entity.getId())) {
+                throw new InvalidDataException("Login not unique.");
+            }
+        }
 
         if (nonNull(employeeUser.getLogin())) {
             entity.setLogin(employeeUser.getLogin());
@@ -88,9 +93,9 @@ public class EmployeeUserService {
             entity.setStartDate(DateUtil.parseStartDate(employeeUser.getStartDate()));
         }
 
-        employeeUserRepository.save(entity);
+        EmployeeUserEntity updatedEntity = employeeUserRepository.save(entity);
 
-        return EmployeeUserMapper.mapToModel(entity);
+        return EmployeeUserMapper.mapToModel(updatedEntity);
     }
 
     public EmployeeUser saveOrUpdate(EmployeeUserEntity newEntity) throws InvalidDataException {
@@ -112,36 +117,15 @@ public class EmployeeUserService {
             entity = newEntity;
         }
 
-        employeeUserRepository.save(entity);
+        EmployeeUserEntity savedEntity = employeeUserRepository.save(entity);
 
-        return EmployeeUserMapper.mapToModel(entity);
-    }
-
-    public EmployeeUser update(String userId,
-                               String login,
-                               BigDecimal salary,
-                               String startDate) throws EmployeeNotFoundException {
-
-        Optional<EmployeeUserEntity> optionalEntity = employeeUserRepository.findById(userId);
-        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found"));
-
-        if (nonNull(login)) {
-            entity.setLogin(login);
-        }
-        if (nonNull(salary)) {
-            entity.setSalary(salary);
-        }
-        if (nonNull(startDate)) {
-            entity.setStartDate(DateUtil.parseStartDate(startDate));
-        }
-
-        return EmployeeUserMapper.mapToModel(entity);
+        return EmployeeUserMapper.mapToModel(savedEntity);
     }
 
     public void delete(String userId) throws EmployeeNotFoundException {
 
         Optional<EmployeeUserEntity> optionalEntity = employeeUserRepository.findById(userId);
-        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found"));
+        EmployeeUserEntity entity = optionalEntity.orElseThrow(() -> new EmployeeNotFoundException("Employee ID not found."));
 
         employeeUserRepository.delete(entity);
     }

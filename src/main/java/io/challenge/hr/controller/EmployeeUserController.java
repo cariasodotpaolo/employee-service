@@ -84,7 +84,7 @@ public class EmployeeUserController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<EmployeeUser> getUser(@PathVariable(name = "id") String employeeId) {
+    public ResponseEntity<?> getUser(@PathVariable(name = "id") String employeeId) {
 
         EmployeeUser employeeUser = null;
 
@@ -92,7 +92,7 @@ public class EmployeeUserController {
             employeeUser = employeeUserService.get(employeeId);
         } catch (EmployeeNotFoundException e) {
             logger.error(e.getMessage());
-            //TODO: http response
+            return new ResponseEntity<>("{\"message\": \"Employee ID not found.\"}", HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>(employeeUser, HttpStatus.OK);
@@ -123,23 +123,40 @@ public class EmployeeUserController {
 
     @PatchMapping("/users/{id}")
     public ResponseEntity<String> updateUser(@PathVariable(name = "id") String employeeId,
-                                             @RequestBody EmployeeUser employeeUser) {
-
-        logger.debug("\nLOGIN: {}", employeeUser.getLogin());
+                                             @RequestBody String body) {
 
         try {
+            EmployeeUser employeeUser = objectMapper.readValue(body, EmployeeUser.class);
             employeeUserService.update(employeeId, employeeUser);
         } catch (EmployeeNotFoundException e) {
             logger.error(e.getMessage());
-            //TODO: handle http response
+            return new ResponseEntity<>("{\"message\": \"Employee ID not found.\"}", HttpStatus.BAD_REQUEST);
+        } catch (JdbcSQLIntegrityConstraintViolationException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("{\"message\": \"login not unique.\"}", HttpStatus.BAD_REQUEST);
+        } catch (JsonMappingException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("{\"message\": \"" + e.getMessage() + "\"}", HttpStatus.BAD_REQUEST);
+        } catch (JsonProcessingException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("{\"message\": \"Invalid salary.\"}", HttpStatus.BAD_REQUEST);
+        } catch (InvalidDataException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("{\"message\": \"" + e.getMessage() + "\"}", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>("{\"message\": \"Successfully updated.\"}", HttpStatus.OK);
 
+        return new ResponseEntity<>("{\"message\": \"Successfully updated.\"}", HttpStatus.OK);
     }
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable String id) {
 
+        try {
+            employeeUserService.delete(id);
+        } catch (EmployeeNotFoundException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("{\"message\": \"Employee ID not found.\"}", HttpStatus.BAD_REQUEST);
+        }
         return new ResponseEntity<>("{\"message\": \"Successfully deleted.\"}", HttpStatus.OK);
 
     }

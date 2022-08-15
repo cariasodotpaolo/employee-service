@@ -3,7 +3,9 @@ package test.challenge.hr.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.challenge.hr.controller.EmployeeUserController;
+import io.challenge.hr.exception.EmployeeNotFoundException;
 import io.challenge.hr.exception.FileUploadException;
+import io.challenge.hr.exception.InvalidDataException;
 import io.challenge.hr.model.EmployeeUser;
 import io.challenge.hr.service.EmployeeUserService;
 import io.challenge.hr.service.UploadFileService;
@@ -11,6 +13,7 @@ import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +115,7 @@ public class EmployeeUserController_ExceptionTest {
                 .file("uploadFile", givenInvalidStartDateFile().getBytes())
                 .characterEncoding("UTF-8"))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Invalid salary value.")));
+                .andExpect(jsonPath("$.message", is("Invalid startDate value.")));
     }
 
     @Test
@@ -167,76 +170,78 @@ public class EmployeeUserController_ExceptionTest {
     @Test
     void createUser_whenLoginAlreadyExists() throws Exception {
 
-        given(employeeUserService.create(any())).willThrow(JdbcSQLIntegrityConstraintViolationException.class);
+        given(employeeUserService.create(any())).willThrow(new InvalidDataException("Login not unique."));
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(existingEmployeeEntityJson()))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Employee login already exists.")));
+                .andExpect(jsonPath("$.message", is("Login not unique.")));
     }
 
     @Test
     void createUser_whenSalaryIsInvalid() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                .file("uploadFile", givenUploadFile().getBytes())
-                .characterEncoding("UTF-8"));
+        given(employeeUserService.create(any())).willThrow(new InvalidDataException("Salary value is invalid."));
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(employeeEntityJson()))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Salary value is invalid")));
+                .andExpect(jsonPath("$.message", is("Salary value is invalid.")));
     }
 
     @Test
     void createUser_whenDateIsInvalid() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/users/upload")
-                .file("uploadFile", givenUploadFile().getBytes())
-                .characterEncoding("UTF-8"));
+        given(employeeUserService.create(any())).willThrow(new InvalidDataException("Date value is invalid."));
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(employeeEntityJson()))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Date value is invalid")));
+                .andExpect(jsonPath("$.message", is("Date value is invalid.")));
     }
 
     @Test
     void getUser_whenEmployeeNotFound() throws Exception {
 
+        given(employeeUserService.get(any())).willThrow(new EmployeeNotFoundException("Employee ID not found."));
+
         mockMvc.perform(MockMvcRequestBuilders
                 .get("/users/{id}", "XXXXX")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Employee not found")));
+                .andExpect(jsonPath("$.message", is("Employee ID not found.")));
     }
 
     @Test
     void updateUser_whenEmployeeNotFound() throws Exception {
+
+        given(employeeUserService.update(any(), any())).willThrow(new EmployeeNotFoundException("Employee ID not found."));
 
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/users/{id}", "emp0001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(employeeEntityJson()))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Employee does not exist")));
+                .andExpect(jsonPath("$.message", is("Employee ID not found.")));
 
     }
 
     @Test
-    void deleteUser() throws Exception {
+    void deleteUser_whenEmployeeNotFound() throws Exception {
+
+        Mockito.doThrow(new EmployeeNotFoundException("Employee does not exist.")).doNothing().when(employeeUserService).delete(any());
 
         mockMvc.perform(MockMvcRequestBuilders
-                .delete("/users/{id}", "emp0001")
+                .delete("/users/{id}", "empXXXX")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.message", is("Employee does not exist")));
+                .andExpect(jsonPath("$.message", is("Employee ID not found.")));
     }
 
     private MultipartFile givenUploadFile() {
@@ -297,26 +302,6 @@ public class EmployeeUserController_ExceptionTest {
         }
 
         return file;
-    }
-
-    private String getUserListJsonResponse() {
-
-        return "{\n" +
-                "\"results\": [" +
-                "{" +
-                "\"id\": \"emp0001\"," +
-                "\"name\": \"Harry Potter\"," +
-                "\"login\": \"hpotter\"," +
-                "\"salary\": 1234.00," +
-                "\"startDate\": \"2001-11-16\"" +
-                "}," +
-                "{" +
-                "\"id\": \"emp0002\"," +
-                "\"name\": \"Severus Snape\"," +
-                "\"login\": \"ssnape\"," +
-                "\"salary\": 1234.56," +
-                "\"startDate\": \"2001-11-16\"" +
-                "}]}";
     }
 
     private String employeeEntityJson() throws JsonProcessingException {
