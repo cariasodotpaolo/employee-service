@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -66,7 +67,7 @@ public class UploadFileService {
                         .setId(record.get(ID_COL_NAME))
                         .setLogin(record.get(LOGIN_COL_NAME))
                         .setName(record.get(NAME_COL_NAME))
-                        .setSalary(BigDecimal.valueOf(Double.parseDouble(record.get(SALARY_COL_NAME))))
+                        .setSalary(BigDecimal.valueOf(Double.parseDouble(record.get(SALARY_COL_NAME))).setScale(2, RoundingMode.HALF_UP))
                         .setStartDate(record.get(START_DATE_COL_NAME));
 
             }).collect(Collectors.toList());

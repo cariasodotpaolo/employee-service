@@ -1,6 +1,7 @@
 server:
   port: 8080
-  context-path: /employee-service
+  servlet:
+    context-path: /employee-service
 management:
   port: 9999
   context-path: /console

@@ -4,7 +4,7 @@ import io.challenge.hr.entity.EmployeeUserEntity;
 import io.challenge.hr.exception.InvalidDataException;
 import io.challenge.hr.model.EmployeeUser;
 
-import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -22,7 +22,7 @@ public class EmployeeUserMapper {
                     .setId(entity.getId())
                     .setName(entity.getName())
                     .setLogin(entity.getLogin())
-                    .setSalary(entity.getSalary())
+                    .setSalary(entity.getSalary().setScale(2, RoundingMode.HALF_UP))
                     .setStartDate(entity.getStartDate().toString());
     }
 
@@ -32,7 +32,7 @@ public class EmployeeUserMapper {
                                     .setId(e.getId())
                                     .setName(e.getName())
                                     .setLogin(e.getLogin())
-                                    .setSalary(e.getSalary())
+                                    .setSalary(e.getSalary().setScale(2, RoundingMode.HALF_UP))
                                     .setStartDate(e.getStartDate().toString()))
                        .collect(Collectors.toList());
     }
@@ -47,6 +47,6 @@ public class EmployeeUserMapper {
             throw new InvalidDataException("Invalid start date.");
         }
 
-        return new EmployeeUserEntity(model.getId(), model.getName(), model.getLogin(), model.getSalary(), startDate);
+        return new EmployeeUserEntity(model.getId(), model.getName(), model.getLogin(), model.getSalary().setScale(2, RoundingMode.HALF_UP), startDate);
     }
 }

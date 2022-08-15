@@ -1,6 +1,9 @@
 package io.challenge.hr.entity;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -13,14 +16,12 @@ import java.time.LocalDate;
 public class EmployeeUserEntity {
 
     @Id
-    //@GeneratedValue( strategy = GenerationType.SEQUENCE, generator = "employee_user_sequence")
-    //@SequenceGenerator( name = "employee_user_sequence", sequenceName = "employee_user_seq", allocationSize = 1)
     private String id;
     @Column(name = "name")
     private String name;
     @Column(name = "login", unique = true)
     private String login;
-    @Column(name = "salary")
+    @Column(name = "salary", precision = 10, scale = 2)
     private BigDecimal salary;
     @Column(name = "start_date")
     private LocalDate startDate;
