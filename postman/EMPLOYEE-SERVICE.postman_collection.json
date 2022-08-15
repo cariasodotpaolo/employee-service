@@ -1,0 +1,170 @@
+{
+	"info": {
+		"_postman_id": "bb568528-e812-43cb-8ab6-4cbc4bee3667",
+		"name": "EMPLOYEE-SERVICE",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/users/upload",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "uploadFile",
+							"type": "file",
+							"src": ""
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/employee-service/users/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"employee-service",
+						"users",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/users/{id}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8080/employee-service/users/emp9001",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"employee-service",
+						"users",
+						"emp9001"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/users/{ID}",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\": \"new_harry\",\n    \"salary\": 4000.00,\n    \"startDate\": \"2001-10-17\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/employee-service/users/emp9001",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"employee-service",
+						"users",
+						"emp9001"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/users",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"emp9003\",\n    \"name\": \"John Wayne\",\n    \"login\": \"jwayne\",\n    \"salary\": 2500.05,\n    \"startDate\": \"2001-10-18\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/employee-service/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"employee-service",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/users as list",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8080/employee-service/users?minSalary=0&maxSalary=5000&offset=0&limit=0",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"employee-service",
+						"users"
+					],
+					"query": [
+						{
+							"key": "minSalary",
+							"value": "0"
+						},
+						{
+							"key": "maxSalary",
+							"value": "5000"
+						},
+						{
+							"key": "offset",
+							"value": "0"
+						},
+						{
+							"key": "limit",
+							"value": "0"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

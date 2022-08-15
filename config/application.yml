@@ -1,14 +1,15 @@
 server:
   port: 8080
-  context-path: /employee-service
+  servlet:
+    context-path: /employee-service
 management:
   port: 9999
   context-path: /console
 
 logging:
-  config: "classpath:logback-spring.xml"
+  config: "classpath:logback.xml"
   level:
-    io.challenge: INFO
+    io.challenge: DEBUG
 
 spring:
   datasource:

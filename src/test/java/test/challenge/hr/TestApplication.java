@@ -1,4 +1,4 @@
-package io.challenge.hr;
+package test.challenge.hr;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,9 +10,9 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @ComponentScan(value = "io.challenge.hr")
-public class Application {
+public class TestApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(TestApplication.class, args);
     }
 }
